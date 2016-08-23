@@ -1,0 +1,99 @@
+Port of CameraAxe5.1 Shield to Mega
+
+Hi All,
+
+Ric and I have been talking about trying to port the CameraAxe 5.1 shield which currently runs on a Arduino (Uno or the like) to an Arduino Mega (1280 or 2560).
+The purpose for doing this is to allow for more IO lines and to have access to not only the SPI pins but also the I2C pins without any jerking around. (If you
+have followed my thread on the RTC, you know what I mean.)
+It seemed like it would be relatively easy to do and once the details were figured out, it was easy. One of the goals was to not mess up either the CameraAxe shield or the Arduino Mega. All I am doing is adding an mega shield layer to cross a few lines from the arduino
+mega to the CameraAxe shield.
+I got a solarbotics.com mega prototype shield (51845) and a small pile of 8 pin shield stacking headers (FPin8L-413). To prepare the shield I soldered on the stackable headers to all the pin holes to make a stackable header. I then snipped off pins
+10,11,12 and 13 on the bottom side of the mega prototype shield so they will not make a connection to the arduino mega.
+The last hardware thing that needs to be done is to cross connect the mega prototype shield SPI pins (51,52,53) pins to the mega prototype shield pins 10,11,13.
+
+Like so:
+	51 -> 11
+	52 -> 13
+	53 -> 10
+
+I did not connect pin 50 to 12 because they are for SPI reading and our LCD display is output only so we never read it. Because 50 and 12 are part of the SPI hardware they cannot be used for anything else.
+
+The software changes are minimal...
+In the DogmCA/utility/dogm128.h file
+
+Find where pins are defined(near top of file) and add a few lines of code like the following.
+The idea is that when a Mega is being used pins 50 to 53 are specified and
+when a regular arduino Uno or the like is being used, pins 10 to 13 are being used.
+
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+#define PIN_SCK   52
+#define PIN_MISO  50
+#define PIN_MOSI  51
+#define PIN_SS    53
+#else
+#define PIN_SCK   13
+#define PIN_MISO  12
+#define PIN_MOSI  11
+#define PIN_SS    10
+#endif
+
+The other place where a set of #defines are needed is in the cameraAxe_helperFuncs.pde file.
+
+Find where the various pins are defined (top of file) and add a similar section
+like the following.
+
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+
+//#define HW_RX_PIN              0
+//#define HW_TX_PIN              1
+#define BUTTON_ACTIVATE_PIN    2
+#define DEVICE1_SHUTTER_PIN    3
+#define DEVICE1_FOCUS_PIN      4
+#define DEVICE2_SHUTTER_PIN    5
+#define DEVICE2_FOCUS_PIN      6
+#define SENSOR2_POWER_PIN      7
+#define LCD_POWER_PIN          8
+#define LCD_A0_PIN             9
+#define LCD_CS_PIN            10
+#define LCD_SI_PIN            11
+//(Reserved for LCD)          12
+#define LCD_SCL_PIN           13
+#define BUTTONS_APIN           0
+#define BUTTONS_PIN           54
+#define SENSOR1_POWER_PIN     55
+#define SENSOR1_APIN           2
+#define SENSOR1_PIN           56
+#define SENSOR1_TIP_PIN       57
+#define SENSOR2_APIN           4
+#define SENSOR2_PIN           58
+#define SENSOR2_TIP_PIN       59
+
+#else
+
+//#define HW_RX_PIN              0
+//#define HW_TX_PIN              1
+#define BUTTON_ACTIVATE_PIN    2
+#define DEVICE1_SHUTTER_PIN    3
+#define DEVICE1_FOCUS_PIN      4
+#define DEVICE2_SHUTTER_PIN    5
+#define DEVICE2_FOCUS_PIN      6
+#define SENSOR2_POWER_PIN      7
+#define LCD_POWER_PIN          8
+#define LCD_A0_PIN             9
+#define LCD_CS_PIN            10
+#define LCD_SI_PIN            11
+//(Reserved for LCD)          12
+#define LCD_SCL_PIN           13
+#define BUTTONS_APIN           0
+#define BUTTONS_PIN           14
+#define SENSOR1_POWER_PIN     15
+#define SENSOR1_APIN           2
+#define SENSOR1_PIN           16
+#define SENSOR1_TIP_PIN       17
+#define SENSOR2_APIN           4
+#define SENSOR2_PIN           18
+#define SENSOR2_TIP_PIN       19
+
+#endif
+
+4|
